@@ -3,7 +3,7 @@ title: PlutusData
 description: On-chain data structures for Cardano smart contracts
 ---
 
-import { Card, Cards } from 'fumadocs-ui/components/card'
+import { Card, Cards } from "fumadocs-ui/components/card"
 
 # PlutusData
 
@@ -15,13 +15,13 @@ The Evolution SDK's Data module gives you type-safe PlutusData creation without 
 
 PlutusData consists of five primitive types:
 
-| Type | TypeScript | Use For |
-|------|-----------|---------|
-| **Integer** | `bigint` | Amounts, indices, timestamps, quantities |
-| **ByteArray** | `Uint8Array` | Hashes, addresses, policy IDs, asset names |
-| **Constructor** | `{ index: bigint, fields: Data[] }` | Variants, tagged unions, structured data |
-| **Map** | `Map<Data, Data>` | Metadata, key-value stores |
-| **List** | `ReadonlyArray<Data>` | Arrays of values |
+| Type            | TypeScript                          | Use For                                    |
+| --------------- | ----------------------------------- | ------------------------------------------ |
+| **Integer**     | `bigint`                            | Amounts, indices, timestamps, quantities   |
+| **ByteArray**   | `Uint8Array`                        | Hashes, addresses, policy IDs, asset names |
+| **Constructor** | `{ index: bigint, fields: Data[] }` | Variants, tagged unions, structured data   |
+| **Map**         | `Map<Data, Data>`                   | Metadata, key-value stores                 |
+| **List**        | `ReadonlyArray<Data>`               | Arrays of values                           |
 
 ## Quick Start
 
@@ -61,7 +61,7 @@ import { Bytes, Data, Text } from "@evolution-sdk/evolution"
 const fee: Data.Data = 170000n
 const deposit: Data.Data = 2000000n
 
-// Token quantities  
+// Token quantities
 const nftQuantity: Data.Data = 1n
 const ftQuantity: Data.Data = 1000000n
 
@@ -80,14 +80,10 @@ Raw bytes for hashes, addresses, and binary data:
 import { Bytes, Data, Text } from "@evolution-sdk/evolution"
 
 // Transaction hash (32 bytes)
-const txHash = Bytes.fromHex(
-  "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
-)
+const txHash = Bytes.fromHex("a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2")
 
 // Policy ID (28 bytes)
-const policyId = Bytes.fromHex(
-  "1234567890abcdef1234567890abcdef1234567890abcdef12345678"
-)
+const policyId = Bytes.fromHex("1234567890abcdef1234567890abcdef1234567890abcdef12345678")
 
 // Asset name (readable string)
 const assetName = Text.toBytes("MyToken")
@@ -113,13 +109,9 @@ const claimAction = Data.constr(0n, [])
 const cancelAction = Data.constr(1n, [])
 
 // Variant with single field
-const verificationKeyCred = Data.constr(0n, [
-  Bytes.fromHex("abc123def456abc123def456abc123def456abc123def456abc123de")
-])
+const verificationKeyCred = Data.constr(0n, [Bytes.fromHex("abc123def456abc123def456abc123def456abc123def456abc123de")])
 
-const scriptCred = Data.constr(1n, [
-  Bytes.fromHex("def456abc123def456abc123def456abc123def456abc123def456ab")
-])
+const scriptCred = Data.constr(1n, [Bytes.fromHex("def456abc123def456abc123def456abc123def456abc123def456ab")])
 
 // Multiple fields
 const outputRef = Data.constr(0n, [
@@ -149,10 +141,13 @@ const tokenMetadata = Data.map([
   [Text.toBytes("name"), Text.toBytes("MyToken")],
   [Text.toBytes("ticker"), Text.toBytes("MTK")],
   [Text.toBytes("decimals"), 6n],
-  [Text.toBytes("properties"), Data.map([
-    [Text.toBytes("mintable"), 1n], // boolean as 0/1
-    [Text.toBytes("burnable"), 1n]
-  ])]
+  [
+    Text.toBytes("properties"),
+    Data.map([
+      [Text.toBytes("mintable"), 1n], // boolean as 0/1
+      [Text.toBytes("burnable"), 1n]
+    ])
+  ]
 ])
 ```
 
@@ -201,7 +196,7 @@ const datum = Data.constr(0n, [
 const cborHex = Data.toCBORHex(datum)
 // "d8799fa2646265..."
 
-// Encode to bytes  
+// Encode to bytes
 const cborBytes = Data.toCBORBytes(datum)
 // Uint8Array [216, 121, 159, ...]
 
@@ -260,10 +255,13 @@ const metadata = Data.map([
   [Text.toBytes("name"), Text.toBytes("SpaceAce #4242")],
   [Text.toBytes("image"), Text.toBytes("ipfs://QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco")],
   [Text.toBytes("rarity"), Text.toBytes("legendary")],
-  [Text.toBytes("attributes"), Data.map([
-    [Text.toBytes("class"), Text.toBytes("explorer")],
-    [Text.toBytes("power"), 9000n]
-  ])]
+  [
+    Text.toBytes("attributes"),
+    Data.map([
+      [Text.toBytes("class"), Text.toBytes("explorer")],
+      [Text.toBytes("power"), 9000n]
+    ])
+  ]
 ])
 
 const cip68Datum = Data.constr(0n, [
@@ -314,6 +312,207 @@ Use the Data module directly when:
 - Building tooling or explorers
 
 For production smart contract integration, use [TSchema](/docs/encoding/tschema) for type-safe schema definitions with automatic validation.
+
+## Data.withSchema()
+
+`Data.withSchema()` is the bridge between raw PlutusData and TSchema. It takes a TSchema definition and returns a codec with six methods for converting between your TypeScript types and CBOR:
+
+```typescript twoslash
+import { Bytes, Data, TSchema } from "@evolution-sdk/evolution"
+
+const EscrowSchema = TSchema.Struct({
+  beneficiary: TSchema.ByteArray,
+  deadline: TSchema.Integer,
+  amount: TSchema.Integer
+})
+
+// Create codec from schema
+const EscrowCodec = Data.withSchema(EscrowSchema)
+
+// Available methods:
+// EscrowCodec.toData(value)        → PlutusData
+// EscrowCodec.fromData(data)       → value
+// EscrowCodec.toCBORHex(value)     → string
+// EscrowCodec.toCBORBytes(value)   → Uint8Array
+// EscrowCodec.fromCBORHex(hex)     → value
+// EscrowCodec.fromCBORBytes(bytes) → value
+
+const datum = {
+  beneficiary: Bytes.fromHex("abc123def456abc123def456abc123def456abc123def456abc123de"),
+  deadline: 1735689600000n,
+  amount: 10000000n
+}
+
+// Encode to CBOR hex (for use in transactions)
+const cborHex = EscrowCodec.toCBORHex(datum)
+
+// Decode back from CBOR hex
+const decoded = EscrowCodec.fromCBORHex(cborHex)
+
+// Convert to raw PlutusData
+const plutusData = EscrowCodec.toData(datum)
+```
+
+Use `Data.withSchema()` any time you have a TSchema definition and need to encode/decode values for on-chain use. For raw PlutusData without a schema, use `Data.toCBORHex()` directly.
+
+## Hashing PlutusData
+
+Use `Data.hashData()` to compute the blake2b-256 hash of any PlutusData value over its CBOR encoding. This is used when you need to reference a datum by hash in a transaction output:
+
+```typescript twoslash
+import { Bytes, Data, TSchema } from "@evolution-sdk/evolution"
+
+const EscrowSchema = TSchema.Struct({
+  beneficiary: TSchema.ByteArray,
+  deadline: TSchema.Integer,
+  amount: TSchema.Integer
+})
+
+const EscrowCodec = Data.withSchema(EscrowSchema)
+
+const datum = {
+  beneficiary: Bytes.fromHex("abc123def456abc123def456abc123def456abc123def456abc123de"),
+  deadline: 1735689600000n,
+  amount: 10000000n
+}
+
+// Convert to raw PlutusData first, then hash
+const plutusData = EscrowCodec.toData(datum)
+const datumHash = Data.hashData(plutusData)
+
+console.log(datumHash) // DatumHash instance (blake2b-256)
+```
+
+## DataEncoded
+
+`DataEncoded` is a TypeScript type representing PlutusData in its JSON-serializable form, based on the Conway CDDL specification. It is used internally for JSON encoding and is useful when you need to inspect or transmit PlutusData as plain JSON:
+
+```typescript twoslash
+import { Data } from "@evolution-sdk/evolution"
+
+// DataEncoded represents PlutusData in JSON-safe form:
+//
+// Constructor:  { index: string, fields: DataEncoded[] }
+// Map:          ReadonlyArray<readonly [DataEncoded, DataEncoded]>
+// List:         ReadonlyArray<DataEncoded>
+// Integer:      string  (e.g. "42")
+// ByteArray:    string  (hex, e.g. "a1b2c3")
+
+type MyDatumEncoded = Data.DataEncoded
+
+// Example: a Constructor with one integer field
+const encoded: Data.DataEncoded = {
+  index: "0",
+  fields: ["5000000"]
+}
+```
+
+You will rarely need to use `DataEncoded` directly — prefer `Data.withSchema()` with TSchema for type-safe encoding. `DataEncoded` is most useful when debugging raw PlutusData or building low-level serialization tools.
+
+## DataError
+
+`DataError` is the tagged error class thrown by Data operations when encoding or decoding fails. It carries an optional `message` and `cause` for debugging:
+
+```typescript twoslash
+import { Data, TSchema } from "@evolution-sdk/evolution"
+
+const Schema = TSchema.Struct({
+  amount: TSchema.Integer
+})
+
+const Codec = Data.withSchema(Schema)
+
+try {
+  // This will throw DataError if the CBOR is invalid or doesn't match the schema
+  const result = Codec.fromCBORHex("invalid_cbor_hex")
+} catch (error) {
+  if (error instanceof Data.DataError) {
+    console.error("Data decoding failed:", error.message)
+    console.error("Caused by:", error.cause)
+  }
+}
+```
+
+`DataError` extends Effect's `TaggedError`, so it integrates cleanly with Effect-based error handling pipelines if your project uses Effect.
+
+## Constr Class vs Data.constr() Helper
+
+The `Data` module provides two ways to create Constructor PlutusData — the `Constr` class and the `Data.constr()` convenience function. They produce the same result but serve different purposes:
+
+**`Constr` class** — the underlying schema class with typed `index` and `fields` properties. Use it when you need to inspect, pattern match, or type-check a constructor value:
+
+```typescript twoslash
+import { Data } from "@evolution-sdk/evolution"
+
+// Constr is a class with typed properties
+const constr = new Data.Constr({ index: 0n, fields: [] })
+
+console.log(constr.index) // 0n
+console.log(constr.fields) // []
+
+// Useful for type checking
+if (constr instanceof Data.Constr) {
+  console.log("It's a constructor with index:", constr.index)
+}
+```
+
+**`Data.constr()` helper** — a convenience function that calls `Constr.make()` internally. Use it when constructing PlutusData inline for brevity:
+
+```typescript twoslash
+import { Bytes, Data } from "@evolution-sdk/evolution"
+
+// Claim action (index 0, no fields)
+const claim = Data.constr(0n, [])
+
+// Script credential (index 1, one field)
+const scriptCred = Data.constr(1n, [
+  Data.bytearray(Bytes.fromHex("abc123def456abc123def456abc123def456abc123def456abc123de"))
+])
+
+// Equivalent to using the class directly:
+// new Data.Constr({ index: 0n, fields: [] })
+```
+
+**When to use which:**
+
+|                              | `Constr` class | `Data.constr()`        |
+| ---------------------------- | -------------- | ---------------------- |
+| Constructing values          | ✅             | ✅ Preferred (shorter) |
+| Type checking (`instanceof`) | ✅             | ❌                     |
+| Pattern matching on fields   | ✅             | ❌                     |
+| Use in TSchema definitions   | ✅             | ❌                     |
+| Inline data building         | ⚠️ Verbose     | ✅                     |
+
+**Rule of thumb**: Use `Data.constr()` when building data, use the `Constr` class when reading or inspecting it.
+
+## Helper API Reference
+
+A quick reference of all `Data` module helpers:
+
+| Function                           | Signature                   | Description                                         |
+| ---------------------------------- | --------------------------- | --------------------------------------------------- |
+| `Data.withSchema(schema)`          | `(schema) → Codec`          | Create a type-safe codec from a TSchema definition  |
+| `Data.hashData(data)`              | `(Data) → DatumHash`        | Hash PlutusData with blake2b-256 over CBOR encoding |
+| `Data.hash(data)`                  | `(Data) → number`           | Hash value for equality comparison                  |
+| `Data.toCBORHex(data)`             | `(Data) → string`           | Encode raw PlutusData to CBOR hex                   |
+| `Data.fromCBORHex(hex)`            | `(string) → Data`           | Decode CBOR hex to raw PlutusData                   |
+| `Data.toCBORBytes(data)`           | `(Data) → Uint8Array`       | Encode raw PlutusData to CBOR bytes                 |
+| `Data.fromCBORBytes(bytes)`        | `(Uint8Array) → Data`       | Decode CBOR bytes to raw PlutusData                 |
+| `Data.equals(a, b)`                | `(Data, Data) → boolean`    | Deep equality check for PlutusData                  |
+| `Data.constr(index, fields)`       | `(bigint, Data[]) → Constr` | Create a Constructor PlutusData                     |
+| `Data.map(entries)`                | `([Data, Data][]) → Map`    | Create a Map PlutusData                             |
+| `Data.list(items)`                 | `(Data[]) → List`           | Create a List PlutusData                            |
+| `Data.int(value)`                  | `(bigint) → Int`            | Create an Integer PlutusData                        |
+| `Data.bytearray(bytes)`            | `(string) → ByteArray`      | Create a ByteArray PlutusData from hex string       |
+| `Data.isConstr(data)`              | `(Data) → boolean`          | Type guard for Constr                               |
+| `Data.isMap(data)`                 | `(Data) → boolean`          | Type guard for Map                                  |
+| `Data.isList(data)`                | `(Data) → boolean`          | Type guard for List                                 |
+| `Data.isInt(data)`                 | `(Data) → boolean`          | Type guard for Integer                              |
+| `Data.isBytes(data)`               | `(Data) → boolean`          | Type guard for ByteArray                            |
+| `Data.matchConstr(data, handlers)` | `(Data, handlers) → T`      | Pattern match on a Constr                           |
+| `Data.matchData(data, handlers)`   | `(Data, handlers) → T`      | Pattern match on any PlutusData                     |
+| `DataEncoded`                      | `type`                      | JSON-serializable representation of PlutusData      |
+| `DataError`                        | `class`                     | Tagged error for Data encoding/decoding failures    |
 
 ## Next Steps
 
